@@ -6,7 +6,7 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 
 def get_service():
     creds = None
@@ -28,14 +28,33 @@ def get_service():
 
     return build("gmail", "v1", credentials=creds)
 
+def get_or_create_label(service, label_name):
+    labels = service.users().labels().list(userId="me").execute().get("labels", [])
+    for label in labels:
+        if label["name"] == label_name:
+            return label["id"]
+
+    label_body = {
+        "name": label_name,
+        "labelListVisibility": "labelShow",
+        "messageListVisibility": "show"
+    }
+
+    label = service.users().labels().create(
+        userId="me", body=label_body
+    ).execute()
+
+    return label["id"]
+
 def extract_text(message):
     payload = message["payload"]
     parts = payload.get("parts", [])
 
     for part in parts:
         if part["mimeType"] == "text/plain":
-            data = part["body"]["data"]
-            return base64.urlsafe_b64decode(data).decode()
+            data = part["body"].get("data")
+            if data:
+                return base64.urlsafe_b64decode(data).decode()
 
     return ""
 
@@ -48,6 +67,11 @@ def classify_email(text):
 
 def main():
     service = get_service()
+
+    important_label = get_or_create_label(service, "AI-Important")
+    promo_label = get_or_create_label(service, "AI-Promotions")
+    spam_label = get_or_create_label(service, "AI-Spam")
+
     results = service.users().messages().list(
         userId="me", maxResults=5
     ).execute()
@@ -60,9 +84,28 @@ def main():
         ).execute()
 
         text = extract_text(full_msg)
-        if text:
-            result = classify_email(text)
-            print(result)
+        if not text:
+            continue
+
+        result = classify_email(text)
+        category = result["category"]
+
+        label_id = None
+        if category in ["Important", "Work"]:
+            label_id = important_label
+        elif category == "Promotions":
+            label_id = promo_label
+        elif category == "Spam":
+            label_id = spam_label
+
+        if label_id:
+            service.users().messages().modify(
+                userId="me",
+                id=msg["id"],
+                body={"addLabelIds": [label_id]}
+            ).execute()
+
+            print("Labeled:", category)
 
 if __name__ == "__main__":
     main()
