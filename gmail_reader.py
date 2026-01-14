@@ -34,27 +34,26 @@ def get_or_create_label(service, label_name):
         if label["name"] == label_name:
             return label["id"]
 
-    label_body = {
-        "name": label_name,
-        "labelListVisibility": "labelShow",
-        "messageListVisibility": "show"
-    }
-
     label = service.users().labels().create(
-        userId="me", body=label_body
+        userId="me",
+        body={
+            "name": label_name,
+            "labelListVisibility": "labelShow",
+            "messageListVisibility": "show"
+        }
     ).execute()
 
     return label["id"]
 
 def extract_text(message):
-    payload = message["payload"]
+    payload = message.get("payload", {})
     parts = payload.get("parts", [])
 
     for part in parts:
-        if part["mimeType"] == "text/plain":
-            data = part["body"].get("data")
+        if part.get("mimeType") == "text/plain":
+            data = part.get("body", {}).get("data")
             if data:
-                return base64.urlsafe_b64decode(data).decode()
+                return base64.urlsafe_b64decode(data).decode(errors="ignore")
 
     return ""
 
@@ -73,14 +72,16 @@ def main():
     spam_label = get_or_create_label(service, "AI-Spam")
 
     results = service.users().messages().list(
-        userId="me", maxResults=5
+        userId="me",
+        maxResults=5
     ).execute()
 
     messages = results.get("messages", [])
 
     for msg in messages:
         full_msg = service.users().messages().get(
-            userId="me", id=msg["id"]
+            userId="me",
+            id=msg["id"]
         ).execute()
 
         text = extract_text(full_msg)
@@ -88,21 +89,23 @@ def main():
             continue
 
         result = classify_email(text)
-        category = result["category"]
+        category = result.get("category")
 
-        label_id = None
+        body = {}
+
         if category in ["Important", "Work"]:
-            label_id = important_label
+            body["addLabelIds"] = [important_label]
         elif category == "Promotions":
-            label_id = promo_label
+            body["addLabelIds"] = [promo_label]
         elif category == "Spam":
-            label_id = spam_label
+            body["addLabelIds"] = [spam_label]
+            body["removeLabelIds"] = ["INBOX"]
 
-        if label_id:
+        if body:
             service.users().messages().modify(
                 userId="me",
                 id=msg["id"],
-                body={"addLabelIds": [label_id]}
+                body=body
             ).execute()
 
             print("Labeled:", category)
