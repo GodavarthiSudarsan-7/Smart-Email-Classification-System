@@ -1,7 +1,19 @@
 text,label
 Meeting scheduled tomorrow,Important
 Your bank OTP is 123456,Important
-Win a free iPhone now,Spam
-Limited offer buy now,Promotions
 Exam timetable released,Work
 Assignment deadline extended,Work
+Project review meeting today,Work
+Please submit report by tomorrow,Important
+
+Limited offer buy now,Promotions
+Big sale this weekend,Promotions
+Get 50 percent off on electronics,Promotions
+Special discount just for you,Promotions
+Enroll now and save money,Promotions
+
+Win a free iPhone now,Spam
+Congratulations you won a lottery,Spam
+Click here to claim your prize,Spam
+You have been selected for cash reward,Spam
+Urgent winner notification click now,Spam

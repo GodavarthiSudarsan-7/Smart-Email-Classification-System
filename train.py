@@ -56,7 +56,12 @@ df["text"] = df["text"].apply(clean_text)
 
 
 model = Pipeline([
-    ("tfidf", TfidfVectorizer()),
+    ("tfidf", TfidfVectorizer(
+    stop_words="english",
+    ngram_range=(1,2),
+    min_df=1
+)),
+
     ("clf", MultinomialNB())
 ])
 
