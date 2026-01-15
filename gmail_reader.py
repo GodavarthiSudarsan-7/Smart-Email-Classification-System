@@ -60,6 +60,19 @@ def extract_text(message):
 
     return ""
 
+def extract_headers(message):
+    headers = message.get("payload", {}).get("headers", [])
+    sender = ""
+    subject = ""
+
+    for h in headers:
+        if h.get("name") == "From":
+            sender = h.get("value")
+        elif h.get("name") == "Subject":
+            subject = h.get("value")
+
+    return sender, subject
+
 def classify_email(text):
     response = requests.post(
         "http://127.0.0.1:5000/predict",
@@ -67,18 +80,30 @@ def classify_email(text):
     )
     return response.json()
 
-def save_to_csv(message_id, result):
+def save_to_csv(message_id, result, sender, subject):
     file_exists = os.path.exists(CSV_FILE)
     with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         if not file_exists:
-            writer.writerow(["timestamp", "message_id", "category", "priority", "urgent"])
+            writer.writerow([
+                "timestamp",
+                "message_id",
+                "sender",
+                "subject",
+                "category",
+                "priority",
+                "urgent",
+                "confidence"
+            ])
         writer.writerow([
             datetime.now().isoformat(),
             message_id,
+            sender,
+            subject,
             result.get("category"),
             result.get("priority"),
-            result.get("urgent")
+            result.get("urgent"),
+            result.get("confidence")
         ])
 
 def main():
@@ -87,6 +112,7 @@ def main():
     important_label = get_or_create_label(service, "AI-Important")
     promo_label = get_or_create_label(service, "AI-Promotions")
     spam_label = get_or_create_label(service, "AI-Spam")
+    review_label = get_or_create_label(service, "AI-Review")
 
     results = service.users().messages().list(
         userId="me",
@@ -105,18 +131,24 @@ def main():
         if not text:
             continue
 
+        sender, subject = extract_headers(full_msg)
         result = classify_email(text)
+
         category = result.get("category")
+        confidence = result.get("confidence", 1)
 
         body = {}
 
-        if category in ["Important", "Work"]:
-            body["addLabelIds"] = [important_label]
-        elif category == "Promotions":
-            body["addLabelIds"] = [promo_label]
-        elif category == "Spam":
-            body["addLabelIds"] = [spam_label]
-            body["removeLabelIds"] = ["INBOX"]
+        if confidence < 0.4:
+            body["addLabelIds"] = [review_label]
+        else:
+            if category in ["Important", "Work"]:
+                body["addLabelIds"] = [important_label]
+            elif category == "Promotions":
+                body["addLabelIds"] = [promo_label]
+            elif category == "Spam":
+                body["addLabelIds"] = [spam_label]
+                body["removeLabelIds"] = ["INBOX"]
 
         if body:
             service.users().messages().modify(
@@ -125,7 +157,7 @@ def main():
                 body=body
             ).execute()
 
-            save_to_csv(msg["id"], result)
+            save_to_csv(msg["id"], result, sender, subject)
             print("Labeled & Stored:", category)
 
 if __name__ == "__main__":
