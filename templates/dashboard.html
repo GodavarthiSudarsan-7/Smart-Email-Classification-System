@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email AI Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        h2 { margin-bottom: 5px; }
+        .box { display: inline-block; padding: 15px; margin: 5px; border: 1px solid #ccc; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+<h2>Email AI Dashboard</h2>
+<p>Total Emails Processed: <b>{{ total }}</b></p>
+
+<div>
+{% for k, v in counts.items() %}
+  <div class="box">
+    <b>{{ k }}</b><br>{{ v }}
+  </div>
+{% endfor %}
+</div>
+
+<h3>Recent Emails</h3>
+
+<table>
+<tr>
+    <th>Time</th>
+    <th>Sender</th>
+    <th>Subject</th>
+    <th>Category</th>
+    <th>Confidence</th>
+</tr>
+
+{% for r in rows %}
+<tr>
+    <td>{{ r.timestamp }}</td>
+    <td>{{ r.sender }}</td>
+    <td>{{ r.subject }}</td>
+    <td>{{ r.category }}</td>
+    <td>{{ r.confidence }}</td>
+</tr>
+{% endfor %}
+</table>
+
+</body>
+</html>
