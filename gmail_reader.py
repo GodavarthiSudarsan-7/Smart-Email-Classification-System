@@ -2,11 +2,14 @@ import os
 import base64
 import pickle
 import requests
+import csv
+from datetime import datetime
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
+CSV_FILE = "email_history.csv"
 
 def get_service():
     creds = None
@@ -64,6 +67,20 @@ def classify_email(text):
     )
     return response.json()
 
+def save_to_csv(message_id, result):
+    file_exists = os.path.exists(CSV_FILE)
+    with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(["timestamp", "message_id", "category", "priority", "urgent"])
+        writer.writerow([
+            datetime.now().isoformat(),
+            message_id,
+            result.get("category"),
+            result.get("priority"),
+            result.get("urgent")
+        ])
+
 def main():
     service = get_service()
 
@@ -108,7 +125,8 @@ def main():
                 body=body
             ).execute()
 
-            print("Labeled:", category)
+            save_to_csv(msg["id"], result)
+            print("Labeled & Stored:", category)
 
 if __name__ == "__main__":
     main()
