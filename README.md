@@ -1,107 +1,94 @@
-# 📧 Smart Email Classification System
+# Smart Email Classification System
 
-The **Smart Email Classification System** is a Machine Learning–based application that automatically classifies emails into meaningful categories such as **Spam**, **Important**, **Promotions**, or **Work-related**.  
-It helps users and organizations manage large volumes of emails efficiently by prioritizing what truly matters.
-
-This project demonstrates a complete ML workflow, from data preprocessing and model training to prediction.
+An AI-powered Gmail automation system that reads emails, classifies them using Machine Learning (NLP), automatically applies Gmail labels, archives spam, and stores classification history for analytics.
 
 ---
 
-## 🚀 Features
+## Features
 
-- 📥 Classifies emails based on content
-- 🧠 Uses NLP + Machine Learning
-- ⚡ Fast and lightweight
-- 🧩 Clean and modular Python code
-- 📊 Dataset-driven training
-- ♻️ Easily extensible to more categories
-
----
-
-## 🛠️ Tech Stack
-
-| Component | Technology |
-|--------|------------|
-| Language | Python |
-| ML / NLP | Scikit-learn |
-| Feature Extraction | Text preprocessing |
-| Model | Supervised ML Classifier |
-| Dataset | CSV-based email dataset |
-| Version Control | Git & GitHub |
+- Gmail OAuth integration (secure access)
+- AI-based email classification (Important, Work, Promotions, Spam)
+- Automatic Gmail labeling
+- Automatic spam archiving
+- Confidence-aware review labeling (AI-Review)
+- Stores classification history in CSV
+- Analytics dashboard to visualize results
+- Safe on-demand execution (no background battery drain)
 
 ---
 
-## 📂 Project Structure
+## Tech Stack
 
-Smart-Email-Classification-System/
-│
-├── ml-service/
-│ └── data/
-│ └── email.csv # Training dataset
-│
-├── preprocessing.py # Text cleaning & preprocessing
-├── train.py # Model training script
-├── predict.py # Email prediction script
-├── requirements.txt # Project dependencies
-├── .gitignore
-└── README.md
-
-
+- Python
+- Flask (API + Dashboard)
+- Scikit-learn (NLP / ML)
+- Gmail API
+- OAuth 2.0
+- HTML (Dashboard UI)
 
 ---
 
-## 🧠 How It Works
+## System Architecture
 
-1. 📄 Email text is collected as input
-2. 🧹 Text is cleaned and preprocessed
-3. 🔢 Features are extracted
-4. 🤖 Machine learning model is trained
-5. 📌 Emails are classified into categories
+Gmail Inbox  
+→ Gmail API  
+→ AI Classification Service (Flask + ML)  
+→ Gmail Labels & Archive  
+→ CSV Storage  
+→ Dashboard View
 
 ---
 
-## ▶️ How to Run the Project Locally
+## How It Works
 
-### 1️⃣ Clone the repository
+1. Gmail emails are accessed using OAuth authentication.
+2. Email content is sent to an AI model via a Flask API.
+3. The AI model predicts category, priority, urgency, and confidence.
+4. Gmail labels are applied automatically.
+5. Spam emails are archived.
+6. All actions are logged in a CSV file.
+7. A dashboard displays analytics and recent activity.
+
+---
+
+## How to Run
+
+### Step 1: Start AI API
 ```bash
-git clone https://github.com/GodavarthiSudarsan-7/Smart-Email-Classification-System.git
-cd Smart-Email-Classification-System
+python app.py
 
 
-Create a virtual environment
-python -m venv venv
-venv\Scripts\activate  
-
-Install dependencies
-pip install -r requirements.txt
+Step 2: Process Emails
+python gmail_reader.py
 
 
-Train the model
-python train.py
+Step 3: View Dashboard
+python dashboard.py
 
 
-Predict email category
-python predict.py
+opens :- http://127.0.0.1:5001
 
 
-📌 Sample Use Cases
+Safety & Efficiency
 
-📬 Personal email prioritization
+No continuous background execution
 
-🏢 Corporate email filtering
+No frequent polling
 
-📊 Email analytics & insights
+Laptop-friendly design
 
-🧪 NLP & ML learning project
+Can be extended to cloud or push-based systems
 
-📈 Future Enhancements
 
-🌐 Web-based dashboard
 
-🔔 Email priority alerts
+Future Improvements
 
-🤖 Deep learning models (LSTM / Transformers)
+Gmail push notifications (event-driven)
 
-☁️ Cloud deployment
+Cloud deployment
 
-📱 Integration with email services
+Database storage
+
+Advanced ML models
+
+User preference learning
