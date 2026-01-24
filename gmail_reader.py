@@ -114,6 +114,11 @@ def main():
     spam_label = get_or_create_label(service, "AI-Spam")
     review_label = get_or_create_label(service, "AI-Review")
 
+    p1_label = get_or_create_label(service, "AI-P1-Urgent")
+    p2_label = get_or_create_label(service, "AI-P2-High")
+    p3_label = get_or_create_label(service, "AI-P3-Normal")
+    p4_label = get_or_create_label(service, "AI-P4-Low")
+
     results = service.users().messages().list(
         userId="me",
         maxResults=5
@@ -136,19 +141,33 @@ def main():
 
         category = result.get("category")
         confidence = result.get("confidence", 1)
+        priority = result.get("priority", 4)
 
         body = {}
 
         if confidence < 0.4:
             body["addLabelIds"] = [review_label]
         else:
+            labels = []
+
             if category in ["Important", "Work"]:
-                body["addLabelIds"] = [important_label]
+                labels.append(important_label)
             elif category == "Promotions":
-                body["addLabelIds"] = [promo_label]
+                labels.append(promo_label)
             elif category == "Spam":
-                body["addLabelIds"] = [spam_label]
+                labels.append(spam_label)
                 body["removeLabelIds"] = ["INBOX"]
+
+            if priority == 1:
+                labels.append(p1_label)
+            elif priority == 2:
+                labels.append(p2_label)
+            elif priority == 3:
+                labels.append(p3_label)
+            else:
+                labels.append(p4_label)
+
+            body["addLabelIds"] = labels
 
         if body:
             service.users().messages().modify(
@@ -158,7 +177,7 @@ def main():
             ).execute()
 
             save_to_csv(msg["id"], result, sender, subject)
-            print("Labeled & Stored:", category)
+            print("Labeled:", category, "Priority:", priority)
 
 if __name__ == "__main__":
     main()
