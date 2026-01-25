@@ -80,6 +80,29 @@ def classify_email(text):
     )
     return response.json()
 
+def create_reply_draft(service, message, reply_text):
+    headers = message.get("payload", {}).get("headers", [])
+    to = ""
+    subject = ""
+
+    for h in headers:
+        if h.get("name") == "From":
+            to = h.get("value")
+        elif h.get("name") == "Subject":
+            subject = h.get("value")
+
+    raw = f"To: {to}\r\nSubject: Re: {subject}\r\n\r\n{reply_text}"
+    encoded = base64.urlsafe_b64encode(raw.encode("utf-8")).decode("utf-8")
+
+    service.users().drafts().create(
+        userId="me",
+        body={
+            "message": {
+                "raw": encoded
+            }
+        }
+    ).execute()
+
 def save_to_csv(message_id, result, sender, subject):
     file_exists = os.path.exists(CSV_FILE)
     with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as file:
@@ -142,6 +165,7 @@ def main():
         category = result.get("category")
         confidence = result.get("confidence", 1)
         priority = result.get("priority", 4)
+        auto_reply = result.get("auto_reply", "")
 
         body = {}
 
@@ -175,6 +199,9 @@ def main():
                 id=msg["id"],
                 body=body
             ).execute()
+
+            if category in ["Important", "Work"] and priority <= 2 and auto_reply:
+                create_reply_draft(service, full_msg, auto_reply)
 
             save_to_csv(msg["id"], result, sender, subject)
             print("Labeled:", category, "Priority:", priority)
